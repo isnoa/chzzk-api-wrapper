@@ -177,3 +177,5 @@ app.get("/game/sites", async (req, res) => {
     res.status(500).json({ ok: false, message: "게임 사이트를 가져오는 데 실패했습니다", data: null });
   }
 });
+
+module.exports = app;
