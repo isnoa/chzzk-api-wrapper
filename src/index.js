@@ -61,6 +61,10 @@ async function sendDiscordAlert(message) {
   });
 })();
 
+app.get("/", (req, res) => {
+  res.send("Hello, world!");
+});
+
 app.get("/auth/login", (req, res) => {
   const state = Math.random().toString(36).substring(2, 15);
   const authUrl = chzzk.getAuthorizationCodeUrl(CHZZK_REDIRECT_URI, state);
