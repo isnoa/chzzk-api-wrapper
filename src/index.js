@@ -7,8 +7,10 @@ const expressBasicAuth = require("express-basic-auth");
 const axiosForWebhook = require("axios");
 const axios = require("axios");
 
-const app = express();
 const port = 3000;
+
+const app = express();
+module.exports = app;
 
 const LOGIN_USERNAME = process.env.LOGIN_USERNAME;
 const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD;
@@ -177,5 +179,3 @@ app.get("/game/sites", async (req, res) => {
     res.status(500).json({ ok: false, message: "게임 사이트를 가져오는 데 실패했습니다", data: null });
   }
 });
-
-module.exports = app;
