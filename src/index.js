@@ -80,11 +80,13 @@ app.get("/auth/callback", async (req, res) => {
     if (tokens.accessToken) {
       res.json({ ok: true, message: null, data: null });
     } else {
-      res.status(400).json({ ok: false, message: "액세스 토큰을 가져오는 데 실패했습니다", data: null });
+      res
+        .status(400)
+        .json({ ok: false, message: "액세스 토큰을 가져오는 데 실패했습니다.", data: null });
     }
   } catch (error) {
     console.error("토큰 발급 중 오류:", error);
-    res.status(500).json({ ok: false, message: "토큰 발급에 실패했습니다", data: null });
+    res.status(500).json({ ok: false, message: "토큰 발급에 실패했습니다.", data: null });
   }
 });
 
@@ -108,18 +110,18 @@ app.get("/me", async (req, res) => {
         data: null,
       });
     }
-    res.status(500).json({ ok: false, message: "사용자 정보를 가져오는 데 실패했습니다", data: null });
+    res.status(500).json({ ok: false, message: "사용자 정보를 가져오는 데 실패했습니다.", data: null });
   }
 });
 
 app.get("/categories/search", async (req, res) => {
   const { query, size } = req.query;
   if (!query) {
-    return res.status(400).json({ ok: false, message: "쿼리 매개변수가 필요합니다", data: null });
+    return res.status(400).json({ ok: false, message: "쿼리 매개변수가 필요합니다.", data: null });
   } else if (!size || isNaN(size) || size <= 0) {
     return res
       .status(400)
-      .json({ ok: false, message: "크기(size)는 필수이며 양수여야 합니다", data: null });
+      .json({ ok: false, message: "크기(size)는 필수이며 양수여야 합니다.", data: null });
   }
   try {
     const result = await chzzk.searchCategory(query, size);
@@ -128,14 +130,14 @@ app.get("/categories/search", async (req, res) => {
     res.json({ ok: true, message: null, data: gameCategories.length > 0 ? gameCategories : null });
   } catch (error) {
     console.error("카테고리 검색 중 오류:", error);
-    res.status(500).json({ ok: false, message: "카테고리 검색에 실패했습니다", data: null });
+    res.status(500).json({ ok: false, message: "카테고리 검색에 실패했습니다.", data: null });
   }
 });
 
 app.get("/game/info", async (req, res) => {
   const { categoryId } = req.query;
   if (!categoryId) {
-    return res.status(400).json({ ok: false, message: "categoryId 매개변수가 필요합니다", data: null });
+    return res.status(400).json({ ok: false, message: "categoryId 매개변수가 필요합니다.", data: null });
   }
   try {
     const infoRes = await axios.get(
@@ -144,14 +146,16 @@ app.get("/game/info", async (req, res) => {
     res.json({ ok: true, message: null, data: infoRes.data?.content || null });
   } catch (error) {
     console.error("카테고리 정보 가져오기 중 오류:", error);
-    res.status(500).json({ ok: false, message: "카테고리 정보를 가져오는 데 실패했습니다", data: null });
+    res
+      .status(500)
+      .json({ ok: false, message: "카테고리 정보를 가져오는 데 실패했습니다.", data: null });
   }
 });
 
 app.get("/lounge/info", async (req, res) => {
   const { loungeId } = req.query;
   if (!loungeId) {
-    return res.status(400).json({ ok: false, message: "loungeId 매개변수가 필요합니다", data: null });
+    return res.status(400).json({ ok: false, message: "loungeId 매개변수가 필요합니다.", data: null });
   }
   try {
     const loungeRes = await axios.get(
@@ -160,14 +164,14 @@ app.get("/lounge/info", async (req, res) => {
     res.json({ ok: true, message: null, data: loungeRes.data?.content || null });
   } catch (error) {
     console.error("라운지 정보 가져오기 중 오류:", error);
-    res.status(500).json({ ok: false, message: "라운지 정보를 가져오는 데 실패했습니다", data: null });
+    res.status(500).json({ ok: false, message: "라운지 정보를 가져오는 데 실패했습니다.", data: null });
   }
 });
 
 app.get("/game/sites", async (req, res) => {
   const { gameId } = req.query;
   if (!gameId) {
-    return res.status(400).json({ ok: false, message: "gameId 매개변수가 필요합니다", data: null });
+    return res.status(400).json({ ok: false, message: "gameId 매개변수가 필요합니다.", data: null });
   }
   try {
     const siteRes = await axios.get(
@@ -176,6 +180,6 @@ app.get("/game/sites", async (req, res) => {
     res.json({ ok: true, message: null, data: siteRes.data?.content?.sites || [] });
   } catch (error) {
     console.error("게임 사이트 가져오기 중 오류:", error);
-    res.status(500).json({ ok: false, message: "게임 사이트를 가져오는 데 실패했습니다", data: null });
+    res.status(500).json({ ok: false, message: "게임 사이트를 가져오는 데 실패했습니다.", data: null });
   }
 });
