@@ -3,17 +3,10 @@ const { MongoClient } = require("mongodb");
 const config = require("./config/config");
 
 const mongoOptions = {
-  maxPoolSize: 50,
-  minPoolSize: 10,
-  maxIdleTimeMS: 60000,
-  waitQueueTimeoutMS: 5000,
-  serverSelectionTimeoutMS: 5000,
-  connectTimeoutMS: 5000,
-  socketTimeoutMS: 5000,
-  retryWrites: true,
-  retryReads: true,
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 10000,
+  connectTimeoutMS: 10000,
   w: "majority",
-  wtimeoutMS: 5000,
 };
 
 async function loadToken() {
