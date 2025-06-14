@@ -2,11 +2,9 @@ const fs = require("fs");
 const { MongoClient } = require("mongodb");
 const config = require("./config/config");
 
-// MongoDB 연결 옵션 설정
 const mongoOptions = {
   maxPoolSize: 300,
   minPoolSize: 100,
-  maxConnectionLifeTime: 0,
   maxIdleTimeMS: 0,
   waitQueueTimeoutMS: 1000,
   serverSelectionTimeoutMS: 1000,
