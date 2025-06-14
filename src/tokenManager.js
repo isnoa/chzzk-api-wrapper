@@ -2,20 +2,13 @@ const fs = require("fs");
 const { MongoClient } = require("mongodb");
 const config = require("./config/config");
 
-const mongoOptions = {
-  maxPoolSize: 10,
-  serverSelectionTimeoutMS: 10000,
-  connectTimeoutMS: 10000,
-  w: "majority",
-};
-
 async function loadToken() {
   if (config.tokenStorage === "json") {
     if (!fs.existsSync(config.tokenJsonPath)) return null;
     const data = fs.readFileSync(config.tokenJsonPath, "utf-8");
     return JSON.parse(data);
   } else if (config.tokenStorage === "mongodb") {
-    const client = new MongoClient(config.mongoUri, mongoOptions);
+    const client = new MongoClient(config.mongoUri);
     try {
       await client.connect();
       const db = client.db("chzzk");
@@ -32,7 +25,7 @@ async function saveToken(token) {
   if (config.tokenStorage === "json") {
     fs.writeFileSync(config.tokenJsonPath, JSON.stringify(token, null, 2), "utf-8");
   } else if (config.tokenStorage === "mongodb") {
-    const client = new MongoClient(config.mongoUri, mongoOptions);
+    const client = new MongoClient(config.mongoUri);
     try {
       await client.connect();
       const db = client.db("chzzk");
