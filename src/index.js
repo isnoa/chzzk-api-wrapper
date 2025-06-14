@@ -5,7 +5,6 @@ const express = require("express");
 const Chzzk = require("./chzzk");
 const expressBasicAuth = require("express-basic-auth");
 const axiosForWebhook = require("axios");
-const axios = require("axios");
 const compression = require("compression");
 const timeout = require("connect-timeout");
 
@@ -150,16 +149,14 @@ app.get("/categories/search", async (req, res) => {
   }
 });
 
-app.get("/game/info", async (req, res) => {
-  const { categoryId } = req.query;
+app.get("/game/info/:categoryId", async (req, res) => {
+  const { categoryId } = req.params;
   if (!categoryId) {
-    return res.status(400).json({ ok: false, message: "categoryId 매개변수가 필요합니다.", data: null });
+    return res.status(400).json({ ok: false, message: "categoryId가 필요합니다.", data: null });
   }
   try {
-    const infoRes = await axios.get(
-      `https://api.chzzk.naver.com/service/v1/categories/GAME/${categoryId}/info`
-    );
-    res.json({ ok: true, message: null, data: infoRes.data?.content || null });
+    const result = await chzzk.getGameInfo(categoryId);
+    res.json({ ok: true, message: null, data: result?.content || null });
   } catch (error) {
     console.error("카테고리 정보 가져오기 중 오류:", error);
     res
@@ -168,32 +165,28 @@ app.get("/game/info", async (req, res) => {
   }
 });
 
-app.get("/lounge/info", async (req, res) => {
-  const { loungeId } = req.query;
+app.get("/lounge/info/:loungeId", async (req, res) => {
+  const { loungeId } = req.params;
   if (!loungeId) {
-    return res.status(400).json({ ok: false, message: "loungeId 매개변수가 필요합니다.", data: null });
+    return res.status(400).json({ ok: false, message: "loungeId가 필요합니다.", data: null });
   }
   try {
-    const loungeRes = await axios.get(
-      `https://comm-api.game.naver.com/nng_main/v1/lounge/info/${loungeId}`
-    );
-    res.json({ ok: true, message: null, data: loungeRes.data?.content || null });
+    const result = await chzzk.getLoungeInfo(loungeId);
+    res.json({ ok: true, message: null, data: result?.content || null });
   } catch (error) {
     console.error("라운지 정보 가져오기 중 오류:", error);
     res.status(500).json({ ok: false, message: "라운지 정보를 가져오는 데 실패했습니다.", data: null });
   }
 });
 
-app.get("/game/sites", async (req, res) => {
-  const { gameId } = req.query;
+app.get("/game/sites/:gameId", async (req, res) => {
+  const { gameId } = req.params;
   if (!gameId) {
-    return res.status(400).json({ ok: false, message: "gameId 매개변수가 필요합니다.", data: null });
+    return res.status(400).json({ ok: false, message: "gameId가 필요합니다.", data: null });
   }
   try {
-    const siteRes = await axios.get(
-      `https://comm-api.game.naver.com/nng_main/v1/game/site/download/${gameId}`
-    );
-    res.json({ ok: true, message: null, data: siteRes.data?.content?.sites || [] });
+    const result = await chzzk.getGameSites(gameId);
+    res.json({ ok: true, message: null, data: result?.content?.sites || [] });
   } catch (error) {
     console.error("게임 사이트 가져오기 중 오류:", error);
     res.status(500).json({ ok: false, message: "게임 사이트를 가져오는 데 실패했습니다.", data: null });
@@ -218,4 +211,13 @@ app.get("/game/autocomplete", async (req, res) => {
     console.error("게임 자동완성 검색 중 오류:", error);
     res.status(500).json({ ok: false, message: "게임 검색에 실패했습니다.", data: null });
   }
+});
+
+// 404 에러 핸들러
+app.use((req, res) => {
+  res.status(404).json({
+    ok: false,
+    message: "요청하신 페이지를 찾을 수 없습니다.",
+    data: null,
+  });
 });

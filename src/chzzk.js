@@ -46,6 +46,7 @@ class Chzzk {
     this.http = axios.create({
       baseURL: BASE_URL,
       headers: { "Content-Type": "application/json" },
+      timeout: 10000,
     });
 
     const RETRY_FLAG = Symbol("axiosRetry");
@@ -188,6 +189,12 @@ class Chzzk {
     return {
       "Client-Id": this.clientId,
       "Client-Secret": this.clientSecret,
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept: "application/json, text/plain, */*",
+      "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+      Origin: "https://chzzk.naver.com",
+      Referer: "https://chzzk.naver.com/",
     };
   }
 
@@ -308,6 +315,30 @@ class Chzzk {
         headers: this._clientHeader(),
       }
     );
+    return res.data;
+  }
+
+  async getGameInfo(categoryId) {
+    const res = await axios.get(`/service/v1/categories/GAME/${categoryId}/info`, {
+      headers: this._clientHeader(),
+      baseURL: "https://api.chzzk.naver.com",
+    });
+    return res.data;
+  }
+
+  async getLoungeInfo(loungeId) {
+    const res = await this.http.get(`/nng_main/v1/lounge/info/${loungeId}`, {
+      headers: this._clientHeader(),
+      baseURL: "https://comm-api.game.naver.com",
+    });
+    return res.data;
+  }
+
+  async getGameSites(gameId) {
+    const res = await this.http.get(`/nng_main/v1/game/site/download/${gameId}`, {
+      headers: this._clientHeader(),
+      baseURL: "https://comm-api.game.naver.com",
+    });
     return res.data;
   }
 }
