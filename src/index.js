@@ -6,11 +6,27 @@ const Chzzk = require("./chzzk");
 const expressBasicAuth = require("express-basic-auth");
 const axiosForWebhook = require("axios");
 const axios = require("axios");
+const compression = require("compression");
+const timeout = require("connect-timeout");
 
 const port = 3000;
 
 const app = express();
 module.exports = app;
+
+// favicon 요청 무시
+app.use((req, res, next) => {
+  if (req.path === "/favicon.ico" || req.path === "/favicon.png") {
+    res.status(204).end();
+    return;
+  }
+  next();
+});
+
+app.use(timeout("10s"));
+app.use(compression());
+app.use(express.json({ strict: true }));
+app.use(express.urlencoded({ extended: true }));
 
 const LOGIN_USERNAME = process.env.LOGIN_USERNAME;
 const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD;
