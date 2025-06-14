@@ -199,3 +199,23 @@ app.get("/game/sites", async (req, res) => {
     res.status(500).json({ ok: false, message: "게임 사이트를 가져오는 데 실패했습니다.", data: null });
   }
 });
+
+app.get("/game/autocomplete", async (req, res) => {
+  const { query } = req.query;
+  if (!query) {
+    return res.status(400).json({ ok: false, message: "검색어(query)가 필요합니다.", data: null });
+  }
+  try {
+    const result = await chzzk.searchCategory(query, 10);
+    const categories = result?.content?.data ?? [];
+    const gameCategories = categories.filter((category) => category.categoryType === "GAME");
+    res.json({
+      ok: true,
+      message: null,
+      data: gameCategories.map((category) => category.categoryName),
+    });
+  } catch (error) {
+    console.error("게임 자동완성 검색 중 오류:", error);
+    res.status(500).json({ ok: false, message: "게임 검색에 실패했습니다.", data: null });
+  }
+});
