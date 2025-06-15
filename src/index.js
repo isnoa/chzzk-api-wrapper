@@ -8,7 +8,9 @@ const compression = require("compression");
 const timeout = require("connect-timeout");
 const axios = require("axios");
 const cors = require("cors");
-const { body, param, query, validationResult } = require("express-validator");
+const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
+const { param, query, validationResult } = require("express-validator");
 const {
   ipValidator,
   domainValidator,
@@ -21,6 +23,31 @@ const port = 3000;
 const app = express();
 module.exports = app;
 
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Chzzk API Wrapper",
+      version: "1.0.0",
+      description: "치지직 API 래퍼 서비스",
+    },
+    servers: [
+      {
+        url: "https://ludus-api.shatter.seishun.work",
+        description: "운영 서버",
+      },
+      {
+        url: `http://localhost:${port}`,
+        description: "개발 서버",
+      },
+    ],
+  },
+  apis: ["./src/index.js"],
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.use(cors(corsOptions));
 app.use(ipValidator);
 app.use(domainValidator);
@@ -31,7 +58,7 @@ app.disable("x-powered-by");
 app.use(express.json({ strict: true }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(["/auth/login", "/me"], basicAuth);
+app.use(["/auth/login", "/me", "/api-docs"], basicAuth);
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const { CHZZK_CLIENT_ID, CHZZK_CLIENT_SECRET, CHZZK_REDIRECT_URI } = process.env;
@@ -77,16 +104,79 @@ app.use((req, res, next) => {
   next();
 });
 
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: 서버 상태 확인
+ *     description: 서버가 정상적으로 동작하는지 확인합니다.
+ *     responses:
+ *       200:
+ *         description: 서버가 정상 동작 중입니다.
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: Hello, world!
+ */
 app.get("/", (req, res) => {
   res.send("Hello, world!");
 });
 
+/**
+ * @swagger
+ * /auth/login:
+ *   get:
+ *     summary: 치지직 로그인
+ *     description: 치지직 로그인 페이지로 리다이렉트합니다.
+ *     responses:
+ *       302:
+ *         description: 치지직 로그인 페이지로 리다이렉트됩니다.
+ */
 app.get("/auth/login", (req, res) => {
   const state = Math.random().toString(36).substring(2, 15);
   const authUrl = chzzk.getAuthorizationCodeUrl(CHZZK_REDIRECT_URI, state);
   res.redirect(authUrl);
 });
 
+/**
+ * @swagger
+ * /auth/callback:
+ *   get:
+ *     summary: 치지직 로그인 콜백
+ *     description: 치지직 로그인 후 콜백을 처리합니다.
+ *     parameters:
+ *       - in: query
+ *         name: code
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 인증 코드
+ *       - in: query
+ *         name: state
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 상태 값
+ *     responses:
+ *       200:
+ *         description: 로그인 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: 로그인 실패
+ *       500:
+ *         description: 서버 오류
+ */
 app.get("/auth/callback", async (req, res) => {
   const { code, state } = req.query;
   try {
@@ -104,6 +194,33 @@ app.get("/auth/callback", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /me:
+ *   get:
+ *     summary: 사용자 정보 조회
+ *     description: 현재 로그인한 사용자의 정보를 조회합니다.
+ *     security:
+ *       - basicAuth: []
+ *     responses:
+ *       200:
+ *         description: 사용자 정보 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: 인증 실패
+ *       500:
+ *         description: 서버 오류
+ */
 app.get("/me", async (req, res) => {
   try {
     if (!chzzk.accessToken) {
@@ -141,6 +258,48 @@ const validate = (req, res, next) => {
   next();
 };
 
+/**
+ * @swagger
+ * /game/search:
+ *   get:
+ *     summary: 게임 카테고리 검색
+ *     description: 게임 카테고리를 검색합니다.
+ *     parameters:
+ *       - in: query
+ *         name: categoryName
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 검색할 카테고리 이름
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *         required: true
+ *         description: 검색 결과 크기
+ *     responses:
+ *       200:
+ *         description: 검색 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       400:
+ *         description: 잘못된 요청
+ *       500:
+ *         description: 서버 오류
+ */
 app.get(
   "/game/search",
   [
@@ -162,6 +321,38 @@ app.get(
   }
 );
 
+/**
+ * @swagger
+ * /game/info/{categoryId}:
+ *   get:
+ *     summary: 게임 카테고리 정보 조회
+ *     description: 특정 게임 카테고리의 상세 정보를 조회합니다.
+ *     parameters:
+ *       - in: path
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 카테고리 ID
+ *     responses:
+ *       200:
+ *         description: 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       404:
+ *         description: 카테고리를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
+ */
 app.get(
   "/game/info/:categoryId",
   [param("categoryId").notEmpty().withMessage("categoryId가 필요합니다."), validate],
@@ -193,6 +384,38 @@ app.get(
   }
 );
 
+/**
+ * @swagger
+ * /lounge/info/{loungeId}:
+ *   get:
+ *     summary: 라운지 정보 조회
+ *     description: 특정 라운지의 상세 정보를 조회합니다.
+ *     parameters:
+ *       - in: path
+ *         name: loungeId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 라운지 ID
+ *     responses:
+ *       200:
+ *         description: 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       404:
+ *         description: 라운지를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
+ */
 app.get(
   "/lounge/info/:loungeId",
   [param("loungeId").notEmpty().withMessage("loungeId가 필요합니다."), validate],
@@ -232,6 +455,38 @@ app.get(
   }
 );
 
+/**
+ * @swagger
+ * /game/sites/{gameId}:
+ *   get:
+ *     summary: 게임 사이트 정보 조회
+ *     description: 특정 게임의 관련 사이트 정보를 조회합니다.
+ *     parameters:
+ *       - in: path
+ *         name: gameId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 게임 ID
+ *     responses:
+ *       200:
+ *         description: 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       500:
+ *         description: 서버 오류
+ */
 app.get(
   "/game/sites/:gameId",
   [param("gameId").notEmpty().withMessage("gameId가 필요합니다."), validate],
@@ -250,6 +505,43 @@ app.get(
   }
 );
 
+/**
+ * @swagger
+ * /game/auto_complete:
+ *   get:
+ *     summary: 게임 자동완성 검색
+ *     description: 게임 이름으로 자동완성 검색을 수행합니다.
+ *     parameters:
+ *       - in: query
+ *         name: query
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 검색어
+ *     responses:
+ *       200:
+ *         description: 검색 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                       id:
+ *                         type: string
+ *       500:
+ *         description: 서버 오류
+ */
 app.get(
   "/game/auto_complete",
   [query("query").notEmpty().withMessage("검색어(query)가 필요합니다."), validate],
@@ -274,6 +566,38 @@ app.get(
   }
 );
 
+/**
+ * @swagger
+ * /game/find/{categoryName}:
+ *   get:
+ *     summary: 카테고리 검색
+ *     description: 카테고리 이름으로 정확한 매칭 검색을 수행합니다.
+ *     parameters:
+ *       - in: path
+ *         name: categoryName
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 카테고리 이름
+ *     responses:
+ *       200:
+ *         description: 검색 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       404:
+ *         description: 카테고리를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
+ */
 app.get(
   "/game/find/:categoryName",
   [param("categoryName").notEmpty().withMessage("카테고리 이름이 필요합니다."), validate],
@@ -302,6 +626,36 @@ app.get(
   }
 );
 
+/**
+ * @swagger
+ * /game/googleplay/{packageName}:
+ *   get:
+ *     summary: Google Play 정보 조회
+ *     description: Google Play 스토어의 앱 정보를 조회합니다.
+ *     parameters:
+ *       - in: path
+ *         name: packageName
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 패키지 이름
+ *     responses:
+ *       200:
+ *         description: 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       500:
+ *         description: 서버 오류
+ */
 app.get(
   "/game/googleplay/:packageName",
   [param("packageName").notEmpty().withMessage("packageName이 필요합니다."), validate],
@@ -344,6 +698,38 @@ app.get(
   }
 );
 
+/**
+ * @swagger
+ * /game/detail/{categoryId}:
+ *   get:
+ *     summary: 게임 상세 정보 조회
+ *     description: 게임의 모든 상세 정보를 조회합니다.
+ *     parameters:
+ *       - in: path
+ *         name: categoryId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: 카테고리 ID
+ *     responses:
+ *       200:
+ *         description: 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       404:
+ *         description: 카테고리를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
+ */
 app.get(
   "/game/detail/:categoryId",
   [param("categoryId").notEmpty().withMessage("categoryId가 필요합니다."), validate],

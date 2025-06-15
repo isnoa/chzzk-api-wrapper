@@ -6,7 +6,23 @@ const createErrorResponse = (message) => ({
   data: null,
 });
 
+const normalizeIP = (ip) => {
+  // IPv6 형식의 localhost를 IPv4 형식으로 변환
+  if (ip === "::1" || ip === "::ffff:127.0.0.1") {
+    return "127.0.0.1";
+  }
+  return ip;
+};
+
 const ipValidator = (req, res, next) => {
+  const clientIP = normalizeIP(req.ip || req.connection.remoteAddress);
+  const clientDomain = req.hostname;
+
+  // localhost는 무조건 허용
+  if (clientIP === "127.0.0.1" || clientDomain === "localhost") {
+    return next();
+  }
+
   if (!process.env.ALLOWED_IPS) {
     console.error("환경 변수 ALLOWED_IPS가 설정되지 않았습니다.");
     return res.status(500).json(createErrorResponse("Internal Server Error"));
@@ -19,19 +35,24 @@ const ipValidator = (req, res, next) => {
     return res.status(500).json(createErrorResponse("Internal Server Error"));
   }
 
-  const clientIP = req.ip || req.connection.remoteAddress;
-  if (ALLOWED_IPS.includes(clientIP)) {
+  if (ALLOWED_IPS.includes(clientIP) || ALLOWED_IPS.includes(clientDomain)) {
     return next();
   }
 
-  // IP가 허용되지 않은 경우, 도메인 검사로 넘어갑니다
-  req.ipNotAllowed = true;
+  req.notAllowed = true;
   next();
 };
 
 const domainValidator = (req, res, next) => {
-  // IP가 이미 허용된 경우 바로 통과
-  if (!req.ipNotAllowed) {
+  if (!req.notAllowed) {
+    return next();
+  }
+
+  const clientIP = normalizeIP(req.ip || req.connection.remoteAddress);
+  const clientDomain = req.hostname;
+
+  // localhost는 무조건 허용
+  if (clientIP === "127.0.0.1" || clientDomain === "localhost") {
     return next();
   }
 
@@ -47,30 +68,14 @@ const domainValidator = (req, res, next) => {
     return res.status(500).json(createErrorResponse("Internal Server Error"));
   }
 
-  const origin = req.headers.origin;
-  const referer = req.headers.referer;
-
-  // Origin이나 Referer 중 하나라도 허용된 도메인이면 통과
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    return next();
+  const userAgent = req.headers["user-agent"];
+  if (!userAgent) {
+    console.error("User-Agent가 없습니다.");
+    return res.status(400).json(createErrorResponse("Bad Request"));
   }
 
-  if (referer) {
-    try {
-      const refererUrl = new URL(referer);
-      const refererOrigin = `${refererUrl.protocol}//${refererUrl.host}`;
-      if (ALLOWED_ORIGINS.includes(refererOrigin)) {
-        return next();
-      }
-    } catch (error) {
-      console.error(`잘못된 Referer URL: ${referer}`);
-    }
-  }
-
-  // IP도 허용되지 않고 도메인도 허용되지 않은 경우
-  const clientIP = req.ip || req.connection.remoteAddress;
   console.error(
-    `접근 거부: IP(${clientIP})와 도메인(${origin || referer || "없음"})이 모두 허용되지 않았습니다.`
+    `접근 거부: IP(${clientIP}), 도메인(${clientDomain}), User-Agent(${userAgent})가 모두 허용되지 않았습니다.`
   );
   return res.status(403).json(createErrorResponse("Forbidden"));
 };
