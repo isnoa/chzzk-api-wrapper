@@ -40,7 +40,15 @@ const swaggerOptions = {
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use("/api-docs", swaggerUi.serve);
+app.get(
+  "/api-docs",
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "Chzzk API Wrapper",
+  })
+);
 
 app.use(cors(corsOptions));
 app.use(ipValidator);
@@ -52,7 +60,7 @@ app.disable("x-powered-by");
 app.use(express.json({ strict: true }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(["/auth/login", "/me", "/api-docs"], basicAuth);
+app.use(["/auth/login", "/me"], basicAuth);
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const { CHZZK_CLIENT_ID, CHZZK_CLIENT_SECRET, CHZZK_REDIRECT_URI } = process.env;
