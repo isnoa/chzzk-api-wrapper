@@ -63,7 +63,7 @@ app.disable("x-powered-by");
 app.use(express.json({ strict: true }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(["/auth/login", "/me"], basicAuth);
+app.use(["/auth/login", "/me", "/api-docs"], basicAuth);
 
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 const { CHZZK_CLIENT_ID, CHZZK_CLIENT_SECRET, CHZZK_REDIRECT_URI } = process.env;
