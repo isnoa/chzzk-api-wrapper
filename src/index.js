@@ -44,6 +44,29 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 // Swagger UI 정적 파일 제공
 app.use("/swagger-ui", express.static("dist/swagger-ui"));
 
+// Swagger UI 설정
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "Chzzk API Wrapper",
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      docExpansion: "none",
+      filter: true,
+      showExtensions: true,
+      showCommonExtensions: true,
+      syntaxHighlight: {
+        activate: true,
+        theme: "monokai",
+      },
+    },
+  })
+);
+
 app.use(cors(corsOptions));
 app.use(ipValidator);
 app.use(domainValidator);
