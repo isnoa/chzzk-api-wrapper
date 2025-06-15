@@ -11,13 +11,7 @@ const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
 const { param, query, validationResult } = require("express-validator");
-const {
-  ipValidator,
-  domainValidator,
-  corsOptions,
-  basicAuth,
-  tokenValidator,
-} = require("./middleware/security");
+const { ipValidator, domainValidator, corsOptions, basicAuth } = require("./middleware/security");
 
 const port = 3000;
 const app = express();
