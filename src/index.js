@@ -50,8 +50,6 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     explorer: true,
-    customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "Chzzk API Wrapper",
     swaggerOptions: {
       persistAuthorization: true,
       displayRequestDuration: true,
