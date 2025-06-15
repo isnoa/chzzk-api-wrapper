@@ -4,11 +4,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prod": "nodemon src/index.js",
-    "build": "npm run build:swagger && npm run build:app",
-    "build:swagger": "copyfiles -u 1 \"node_modules/swagger-ui-dist/**/*\" dist/swagger-ui",
-    "build:app": "copyfiles -u 1 \"src/**/*\" dist",
-    "start": "node dist/index.js"
+    "prod": "nodemon src/index.js"
   },
   "keywords": [],
   "author": "",
@@ -23,11 +19,6 @@
     "express": "^5.1.0",
     "express-basic-auth": "^1.2.1",
     "express-validator": "^7.2.1",
-    "mongoose": "^8.15.2",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
-  },
-  "devDependencies": {
-    "copyfiles": "^2.4.1"
+    "mongodb": "^6.17.0"
   }
 }
