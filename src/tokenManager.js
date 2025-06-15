@@ -16,7 +16,7 @@ async function loadToken() {
       minPoolSize: 0,
     });
     try {
-      await client.connect();
+      await client.connect(); 
       const db = client.db("chzzk");
       const token = await db.collection("tokens").findOne({ id: "default" });
       return token;

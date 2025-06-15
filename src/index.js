@@ -50,6 +50,11 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     explorer: true,
+    customCssUrl: "https://cdn.jsdelivr.net/npm/swagger-ui-dist@4.6.3/swagger-ui.css",
+    customJs: [
+      "https://cdn.jsdelivr.net/npm/swagger-ui-dist@4.6.3/swagger-ui-bundle.js",
+      "https://cdn.jsdelivr.net/npm/swagger-ui-dist@4.6.3/swagger-ui-standalone-preset.js",
+    ],
     swaggerOptions: {
       persistAuthorization: true,
       displayRequestDuration: true,
