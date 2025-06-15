@@ -1,6 +1,6 @@
 const fs = require("fs");
-const { MongoClient } = require("mongodb");
 const config = require("./config/config");
+const clientPromise = require("./lib/mongodb");
 
 async function loadToken() {
   if (config.tokenStorage === "json") {
@@ -8,14 +8,14 @@ async function loadToken() {
     const data = fs.readFileSync(config.tokenJsonPath, "utf-8");
     return JSON.parse(data);
   } else if (config.tokenStorage === "mongodb") {
-    const client = new MongoClient(config.mongoUri);
     try {
-      await client.connect();
+      const client = await clientPromise;
       const db = client.db("chzzk");
       const token = await db.collection("tokens").findOne({ id: "default" });
       return token;
-    } finally {
-      await client.close();
+    } catch (error) {
+      console.error("MongoDB 연결 오류:", error);
+      return null;
     }
   }
   throw new Error("Unknown token storage type");
@@ -25,15 +25,15 @@ async function saveToken(token) {
   if (config.tokenStorage === "json") {
     fs.writeFileSync(config.tokenJsonPath, JSON.stringify(token, null, 2), "utf-8");
   } else if (config.tokenStorage === "mongodb") {
-    const client = new MongoClient(config.mongoUri);
     try {
-      await client.connect();
+      const client = await clientPromise;
       const db = client.db("chzzk");
       await db
         .collection("tokens")
         .updateOne({ id: "default" }, { $set: { ...token, id: "default" } }, { upsert: true });
-    } finally {
-      await client.close();
+    } catch (error) {
+      console.error("MongoDB 저장 오류:", error);
+      throw error;
     }
   } else {
     throw new Error("Unknown token storage type");
