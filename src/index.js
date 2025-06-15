@@ -40,13 +40,25 @@ const swaggerOptions = {
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve);
-app.get(
+app.use(
   "/api-docs",
+  swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     explorer: true,
     customCss: ".swagger-ui .topbar { display: none }",
     customSiteTitle: "Chzzk API Wrapper",
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      docExpansion: "none",
+      filter: true,
+      showExtensions: true,
+      showCommonExtensions: true,
+      syntaxHighlight: {
+        activate: true,
+        theme: "monokai",
+      },
+    },
   })
 );
 
@@ -122,7 +134,7 @@ app.use((req, res, next) => {
  *               example: Hello, world!
  */
 app.get("/", (req, res) => {
-  res.send("Hello, world!");
+  res.json("Hello, world!");
 });
 
 /**
