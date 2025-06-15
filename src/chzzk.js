@@ -191,10 +191,6 @@ class Chzzk {
       "Client-Secret": this.clientSecret,
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Accept: "application/json, text/plain, */*",
-      "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-      Origin: "https://chzzk.naver.com",
-      Referer: "https://chzzk.naver.com/",
     };
   }
 
@@ -215,13 +211,27 @@ class Chzzk {
     return res.data;
   }
 
-  async searchCategory(query, size = 20) {
-    const params = new URLSearchParams({ query, size });
+  async searchCategory(categoryName, size) {
+    const params = new URLSearchParams({ query: categoryName, size });
     const res = await this.http.get("/open/v1/categories/search", {
       headers: this._clientHeader(),
       params,
     });
     return res.data;
+  }
+
+  async findCategory(categoryName) {
+    const params = new URLSearchParams({ query: categoryName, size: 1 });
+    const res = await this.http.get("/open/v1/categories/search", {
+      headers: this._clientHeader(),
+      params,
+    });
+
+    const items = Array.isArray(res.data) ? res.data : res.data?.content?.data || [];
+
+    const exactMatch = items.find((item) => item.categoryValue === categoryName);
+
+    return exactMatch || null;
   }
 
   async getLiveList(size = 20, nextCursor = "") {
@@ -318,7 +328,7 @@ class Chzzk {
     return res.data;
   }
 
-  async getGameInfo(categoryId) {
+  async getCategoryInfo(categoryId) {
     const res = await axios.get(`/service/v1/categories/GAME/${categoryId}/info`, {
       headers: this._clientHeader(),
       baseURL: "https://api.chzzk.naver.com",
