@@ -10,10 +10,48 @@ const axios = require("axios");
 const cors = require("cors");
 const { param, query, validationResult } = require("express-validator");
 const { ipValidator, domainValidator, corsOptions, basicAuth } = require("./middleware/security");
+const swaggerJSDoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
+const swaggerDist = require("swagger-ui-dist");
 
 const port = 3000;
 const app = express();
 module.exports = app;
+
+const swaggerDefinition = {
+  openapi: "3.0.0",
+  info: {
+    title: "치지직 API 래퍼",
+    version: "1.0.0",
+    description:
+      "치지직 API를 중점으로 모바일인덱스, 구글 플레이의 정보를 래핑한 REST API 서비스입니다.",
+  },
+  servers: [
+    {
+      url: "https://ludus-api.shatter.seishun.work",
+      description: "프로덕션 서버",
+    },
+    {
+      url: `http://localhost:${port}`,
+      description: "로컬 서버",
+    },
+  ],
+};
+
+const options = {
+  swaggerDefinition,
+  apis: ["./src/index.js"],
+};
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerJSDoc(options), {
+    customCssUrl: "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.8/swagger-ui.css",
+  })
+);
+
+app.use("/swagger-ui", express.static(swaggerDist.getAbsoluteFSPath()));
 
 app.use(cors(corsOptions));
 app.use(ipValidator);
